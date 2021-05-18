@@ -1,0 +1,8 @@
+[project]
+name = "token"
+version = "0.1.0"
+description = "The token package"
+license = "MIT"
+
+[remote]
+author = "[AUTHOR]" # Add your Aleo Package Manager username, team's name, or organization's name.

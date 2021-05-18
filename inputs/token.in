@@ -1,0 +1,7 @@
+// The program input for token/src/main.leo
+[main]
+
+[registers]
+token_id: u8 = 1;
+value_balance: u8 = 100; // Value in the first input register is initialized to 0
+
