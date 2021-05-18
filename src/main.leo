@@ -75,22 +75,51 @@ function credit(
     }
 }
 
-// // The 'token' debit main function.
-// function main() -> (u8, u8) {
+// The 'token' debit main function.
+function main(is_debit: bool) -> (u8, u8) {
 
-//     // Set by token factory instance.
-//     let token_credit: [u8; 48] = [1; 48];
-//     let token_debit: [u8; 48] = [0; 48];
+    // Static variables set by token factory instance (this Leo circuit)
+    let token_credit: [u8; 48] = [1; 48];
+    let token_debit: [u8; 48] = [0; 48];
 
-//     return debit(token_debit, token_credit);
-// }
+    if is_debit {
+        return debit(token_debit, token_credit);
+    } else {
+        return credit(token_credit);
+    }
+}
 
-// // The 'token' credit main function.
-// function main() -> (u8, u8) {
+@test(test_debit)
+function test_debit(is_debit: bool) {
+    // Check that we are calling the debit function with inputs.
+    console.assert(is_debit);
 
-//     // Set by token factory instance.
-//     let token_credit: [u8; 48] = [1; 48];
-//     //let token_debit: [u8; 48] = [0; 48]; // not used
+    let expected_token_id: u8 = 1;
+    let expected_token_balance: u8 = 100;
 
-//     return credit(token_credit);
-// }
+    let (actual_token_id, actual_token_balance) = main(is_debit);
+
+    // Check the id of the token we are transferring (USD, ALEO, DOGE).
+    console.assert(expected_token_id == actual_token_id);
+
+    // Check the correct amount of the token is tranferred.
+    console.assert(expected_token_balance == actual_token_balance);
+}
+
+@test(test_credit)
+function test_credit(is_debit: bool) {
+    // Check that we are calling the credit function with step_two inputs.
+    console.assert(!is_debit);
+
+    let expected_token_id: u8 = 1;
+    let expected_token_balance: u8 = 0;
+
+    let (actual_token_id, actual_token_balance) = main(is_debit);
+
+    // Check the id of the token we are transferring
+    console.assert(expected_token_id == actual_token_id);
+
+    // Check the correct amount of the token is transferred. 
+    // If this number is non-zero, then some amount of tokens have been burned by this transaction.
+    console.assert(expected_token_balance == actual_token_balance);
+}

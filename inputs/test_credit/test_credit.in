@@ -1,0 +1,8 @@
+// The program input for token/src/main.leo
+[main]
+is_debit: bool = false; // invoke the credit function
+
+[registers]
+token_id: u8 = 1;
+value_balance: u8 = 100; // The balance is initialized to 100 after computing `main.leo` with `test_debit/` inputs
+

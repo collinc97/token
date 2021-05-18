@@ -1,0 +1,8 @@
+// The program input for token/src/main.leo
+[main]
+is_debit: bool = true; // invoke the debit function
+
+[registers]
+token_id: u8 = 1;
+value_balance: u8 = 0; // Value in the first input register is initialized to 0
+

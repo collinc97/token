@@ -1,5 +1,6 @@
 // The program input for token/src/main.leo
 [main]
+is_debit: bool = true;
 
 [registers]
 token_id: u8 = 1;
