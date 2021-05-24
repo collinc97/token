@@ -19,6 +19,29 @@ To output the number of constraints, run:
 leo build -d
 ```
 
+## Leo Applications
+
+Given an input, Leo programs compute a output.
+The output is stored in a register.
+Programs can have multiple registers, corresponding to multiple outputs.
+Data that is stored to a register can be accessed by other Leo programs in an Aleo transaction.
+
+An Aleo transaction computes up to four Leo programs. 
+Each program is stored in an encrypted record.
+When a record is executed, its internal program computes a result given private inputs.
+
+Aleo transactions execute two input and two output records.
+Records are executed sequentially. 
+Given input records i1 + i2 and output records o1 + o2, an Aleo transaction will execute i1 -> i2 -> o1 -> o2.
+
+The output registers of an executed record can be accessed by the next record. 
+i1's output registers can be accessed by i2. i2's output registers can be accessed by o1.
+
+The sequential execution of records allows developers to modify and store state changes to the blockchain.
+Because each record is encrypted and each record is executed in zero-knowledge, state changes are stored with complete privacy.
+
+
+
 ## Walkthrough
 
 Consider a token with two functions: `token_debit` and `token_credit`.
@@ -255,95 +278,6 @@ To verify the `local_data_commitment`'s path to the local data root:
 
 Every piece of input information we need is already passed into the Leo input file.
 Since we also depend on the output information for the local data commitment, we calculate the record commitment and local data root at the end of Leo program execution.
-
-If you were to do the calculation in Leo by hand, the `token_debit` function would look like this:
-
-#### Overview
-
- 1. Check the `record.payload.token_id` matches the starting register `registers.token_id`.
- 2. Check the `record.birth_program_id` is equal to `token_debit`.
- 3. Check the `record.death_program_id` is equal to `token_credit`.
- 4. If the global `state.leaf_index` of this record is 0, check the starting register `registers.value_balance` is 0.
- 5. Add the `record.payload.value_balance` to the output value balance.
- 6. **Verify the record commitment.**
- 7. **Verify the local data commitment.**
- 8. Return the `register.token_id` and output value balance.
-
-#### Code
-
-```leo title="token_debit.leo"
-function debit(
-    input,
-    token_debit: [u8; 48],
-    token_credit: [u8; 48]
-) -> (u8, u8) {
-    let id_t = input.registers.id;
-    let payload_id_t = input.record.payload[0]; // payload is u8 bytes
-    let condition1 = id_t == payload_id_t; // 1.
-
-    let id_d = input.record.death_program_id;
-    let condition2 = id_d == token_debit; // 2.
-
-    let id_b = input.record.birth_program_id;
-    let condition3 = id_b == token_credit; // 3.
-
-    let global_index = input.state.leaf_index;
-    let vb_t_old = input.registers.value_balance;
-    let is_zero = vb_t_old == 0;
-    let condition4 = if global_index == 0 ? is_zero : true; // 4.
-
-    let payload_vb_t = input.record.payload[1];
-    let vb_t_new = vb_t_old + payload_vb_t; // 5.
-
-    let cm_actual = commit(
-        record.owner, 
-        record.value, 
-        record.payload,
-        record.birth_program_id,
-        record.death_proigram_id,
-        record.nonce_sn, 
-        record.commitment_randomness,
-    );
-
-    let condition6 = cm cm_actual; // 6.
-
-    let hash_t0 = hash(
-        register.token_id,
-        register.value_balance
-    );
-
-    let hash_t1 = hash(
-        record.payload.token_id,
-        record.payload.value_balance
-    );
-
-    let data = serialize(
-        state.leaf_index,
-        record.serial_number,
-        record.commitment,
-        state_leaf.memo,
-        state_leaf.network_id,
-        hash_t0,
-        hash_t1,
-        state_leaf.leaf_randomness
-    );
-
-    let local_data_actual = merkle_root(data, state_leaf.path);
-    
-    let condition7 = state.root == local_data_actual; // 7.
-
-    // 6. Debit the funds if checks pass
-    let passed = condition1 && condition2 && condition3 && condition4 && condition6 && condition7
-
-    if passed {
-        return (id_t, vb_t_new)
-    } else {
-        return (id_t, vb_t_old)
-    }
-}
-```
-
-#### Summary
 
 The Leo runtime performs verification checks at the end of a program run.
 The input data for these checks comes from the current record and state context that is passed in by default to the `token.in` and `token.state` files.
